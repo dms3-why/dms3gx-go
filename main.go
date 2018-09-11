@@ -17,12 +17,12 @@ import (
 
 	cli "github.com/codegangsta/cli"
 	homedir "github.com/mitchellh/go-homedir"
-	rw "github.com/whyrusleeping/gx-go/rewrite"
-	gx "github.com/whyrusleeping/gx/gxutil"
+	rw "github.com/dms3-why/dms3gx-go/rewrite"
+	dms3gx "github.com/dms3-why/dms3gx/gxutil"
 	. "github.com/whyrusleeping/stump"
 )
 
-var vendorDir = filepath.Join("vendor", "gx", "ipfs")
+var vendorDir = filepath.Join("vendor", "dms3gx", "dms3fs")
 
 var cwd string
 
@@ -36,9 +36,9 @@ type GoInfo struct {
 }
 
 type Package struct {
-	gx.PackageBase
+	dms3gx.PackageBase
 
-	Gx GoInfo `json:"gx,omitempty"`
+	Dms3Gx GoInfo `json:"dms3gx,omitempty"`
 }
 
 func LoadPackageFile(name string) (*Package, error) {
@@ -58,9 +58,9 @@ func LoadPackageFile(name string) (*Package, error) {
 
 func main() {
 	app := cli.NewApp()
-	app.Name = "gx-go"
+	app.Name = "dms3gx-go"
 	app.Author = "whyrusleeping"
-	app.Usage = "gx extensions for golang"
+	app.Usage = "dms3gx extensions for golang"
 	app.Version = "1.8.0"
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
@@ -108,7 +108,7 @@ var DepMapCommand = cli.Command{
 	Name:  "dep-map",
 	Usage: "prints out a json dep map for usage by 'import --map'",
 	Action: func(c *cli.Context) error {
-		pkg, err := LoadPackageFile(gx.PkgFileName)
+		pkg, err := LoadPackageFile(dms3gx.PkgFileName)
 		if err != nil {
 			return err
 		}
@@ -131,7 +131,7 @@ var DepMapCommand = cli.Command{
 
 var HookCommand = cli.Command{
 	Name:  "hook",
-	Usage: "go specific hooks to be called by the gx tool",
+	Usage: "go specific hooks to be called by the dms3gx tool",
 	Subcommands: []cli.Command{
 		postImportCommand,
 		reqCheckCommand,
@@ -148,8 +148,8 @@ var HookCommand = cli.Command{
 
 var ImportCommand = cli.Command{
 	Name:  "import",
-	Usage: "import a go package and all its depencies into gx",
-	Description: `imports a given go package and all of its dependencies into gx
+	Usage: "import a go package and all its depencies into dms3gx",
+	Description: `imports a given go package and all of its dependencies into dms3gx
 producing a package.json for each, and outputting a package hash
 for each.`,
 	Flags: []cli.Flag{
@@ -182,7 +182,7 @@ for each.`,
 
 		var gopath string
 		if c.Bool("tmpdir") {
-			dir, err := ioutil.TempDir("", "gx-go-import")
+			dir, err := ioutil.TempDir("", "dms3gx-go-import")
 			if err != nil {
 				return fmt.Errorf("creating temp dir: %s", err)
 			}
@@ -216,7 +216,7 @@ for each.`,
 		pkg := c.Args().First()
 		Log("vendoring package %s", pkg)
 
-		_, err = importer.GxPublishGoPackage(pkg)
+		_, err = importer.Dms3GxPublishGoPackage(pkg)
 		if err != nil {
 			return err
 		}
@@ -277,7 +277,7 @@ var RewriteCommand = cli.Command{
 		},
 	},
 	Action: func(c *cli.Context) error {
-		root, err := gx.GetPackageRoot()
+		root, err := dms3gx.GetPackageRoot()
 		if err != nil {
 			return err
 		}
@@ -286,7 +286,7 @@ var RewriteCommand = cli.Command{
 			return fixImports(root)
 		}
 
-		pkg, err := LoadPackageFile(filepath.Join(root, gx.PkgFileName))
+		pkg, err := LoadPackageFile(filepath.Join(root, dms3gx.PkgFileName))
 		if err != nil {
 			return err
 		}
@@ -363,11 +363,11 @@ var DvcsDepsCommand = cli.Command{
 }
 
 func getImportPath(pkgpath string) (string, error) {
-	pkg, err := LoadPackageFile(filepath.Join(pkgpath, gx.PkgFileName))
+	pkg, err := LoadPackageFile(filepath.Join(pkgpath, dms3gx.PkgFileName))
 	if err != nil {
 		return "", err
 	}
-	return pkg.Gx.DvcsImport, nil
+	return pkg.Dms3Gx.DvcsImport, nil
 }
 
 var PathCommand = cli.Command{
@@ -396,7 +396,7 @@ func fixImports(path string) error {
 	fixmap := make(map[string]string)
 	gopath := os.Getenv("GOPATH")
 	rwf := func(imp string) string {
-		if strings.HasPrefix(imp, "gx/ipfs/") {
+		if strings.HasPrefix(imp, "dms3gx/dms3fs/") {
 			parts := strings.Split(imp, "/")
 			canon := strings.Join(parts[:4], "/")
 			rest := strings.Join(parts[4:], "/")
@@ -409,14 +409,14 @@ func fixImports(path string) error {
 			}
 
 			var pkg Package
-			err := gx.FindPackageInDir(&pkg, filepath.Join(gopath, "src", canon))
+			err := dms3gx.FindPackageInDir(&pkg, filepath.Join(gopath, "src", canon))
 			if err != nil {
 				fmt.Println(err)
 				return imp
 			}
-			if pkg.Gx.DvcsImport != "" {
-				fixmap[imp] = pkg.Gx.DvcsImport
-				return pkg.Gx.DvcsImport + rest
+			if pkg.Dms3Gx.DvcsImport != "" {
+				fixmap[imp] = pkg.Dms3Gx.DvcsImport
+				return pkg.Dms3Gx.DvcsImport + rest
 			}
 			fmt.Printf("Package %s has no dvcs import set!\n", imp)
 		}
@@ -431,7 +431,7 @@ func fixImports(path string) error {
 
 var GetCommand = cli.Command{
 	Name:  "get",
-	Usage: "gx-ified `go get`",
+	Usage: "dms3gx-ified `go get`",
 	Action: func(c *cli.Context) error {
 		pkgpath := c.Args().First()
 		if err := goGetPackage(pkgpath); err != nil {
@@ -445,7 +445,7 @@ var GetCommand = cli.Command{
 
 		pkgdir := filepath.Join(gpath, "src", pkgpath)
 
-		cmd := exec.Command("gx", "install")
+		cmd := exec.Command("dms3gx", "install")
 		cmd.Dir = pkgdir
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
@@ -455,7 +455,7 @@ var GetCommand = cli.Command{
 		}
 
 		var pkg Package
-		if err := gx.LoadPackageFile(&pkg, filepath.Join(pkgdir, "package.json")); err != nil {
+		if err := dms3gx.LoadPackageFile(&pkg, filepath.Join(pkgdir, "package.json")); err != nil {
 			return err
 		}
 
@@ -520,7 +520,7 @@ var postImportCommand = cli.Command{
 		}
 		dephash := c.Args().First()
 
-		pkg, err := LoadPackageFile(gx.PkgFileName)
+		pkg, err := LoadPackageFile(dms3gx.PkgFileName)
 		if err != nil {
 			return err
 		}
@@ -563,7 +563,7 @@ var postInitHookCommand = cli.Command{
 			dir = cwd
 		}
 
-		pkgpath := filepath.Join(dir, gx.PkgFileName)
+		pkgpath := filepath.Join(dir, dms3gx.PkgFileName)
 		pkg, err := LoadPackageFile(pkgpath)
 		if err != nil {
 			return err
@@ -572,10 +572,10 @@ var postInitHookCommand = cli.Command{
 		imp, _ := packagesGoImport(dir)
 
 		if imp != "" {
-			pkg.Gx.DvcsImport = imp
+			pkg.Dms3Gx.DvcsImport = imp
 		}
 
-		err = gx.SavePackageFile(pkg, pkgpath)
+		err = dms3gx.SavePackageFile(pkg, pkgpath)
 		if err != nil {
 			return err
 		}
@@ -601,10 +601,10 @@ var postInstallHookCommand = cli.Command{
 		// update sub-package refs here
 		// ex:
 		// if this package is 'github.com/X/Y' replace all imports
-		// matching 'github.com/X/Y*' with 'gx/<hash>/name*'
+		// matching 'github.com/X/Y*' with 'dms3gx/<hash>/name*'
 
 		var pkg Package
-		err := gx.FindPackageInDir(&pkg, npkg)
+		err := dms3gx.FindPackageInDir(&pkg, npkg)
 		if err != nil {
 			return fmt.Errorf("find package failed: %s", err)
 		}
@@ -614,9 +614,9 @@ var postInstallHookCommand = cli.Command{
 		// build rewrite mapping from parent package if
 		// this call is made on one in the vendor directory
 		var reldir string
-		if strings.Contains(npkg, "vendor/gx/ipfs") {
-			reldir = strings.Split(npkg, "vendor/gx/ipfs")[0]
-			reldir = filepath.Join(reldir, "vendor", "gx", "ipfs")
+		if strings.Contains(npkg, "vendor/dms3gx/dms3fs") {
+			reldir = strings.Split(npkg, "vendor/dms3gx/dms3fs")[0]
+			reldir = filepath.Join(reldir, "vendor", "dms3gx", "dms3fs")
 		} else {
 			reldir = dir
 		}
@@ -628,8 +628,8 @@ var postInstallHookCommand = cli.Command{
 		}
 
 		hash := filepath.Base(npkg)
-		newimp := "gx/ipfs/" + hash + "/" + pkg.Name
-		mapping[pkg.Gx.DvcsImport] = newimp
+		newimp := "dms3gx/dms3fs/" + hash + "/" + pkg.Name
+		mapping[pkg.Dms3Gx.DvcsImport] = newimp
 
 		err = doRewrite(&pkg, dir, mapping)
 		if err != nil {
@@ -709,8 +709,8 @@ var postUpdateHookCommand = cli.Command{
 		if len(c.Args()) < 2 {
 			Fatal("must specify two arguments")
 		}
-		before := "gx/ipfs/" + c.Args()[0]
-		after := "gx/ipfs/" + c.Args()[1]
+		before := "dms3gx/dms3fs/" + c.Args()[0]
+		after := "dms3gx/dms3fs/" + c.Args()[1]
 		err := doUpdate(cwd, before, after)
 		if err != nil {
 			return err
@@ -754,12 +754,12 @@ var DevCopyCommand = cli.Command{
 	Name:  "devcopy",
 	Usage: "Create a development copy of the given package",
 	Action: func(c *cli.Context) error {
-		// gx install --local
-		// gx-go rewrite --undo
+		// dms3gx install --local
+		// dms3gx-go rewrite --undo
 		// symlink <hash> -> dvcs path
 
 		Log("creating local copy of deps")
-		cmd := exec.Command("gx", "install", "--local")
+		cmd := exec.Command("dms3gx", "install", "--local")
 		cmd.Stderr = os.Stderr
 		cmd.Stdout = os.Stdout
 		if err := cmd.Run(); err != nil {
@@ -767,14 +767,14 @@ var DevCopyCommand = cli.Command{
 		}
 
 		Log("change imports to dvcs")
-		cmd = exec.Command("gx-go", "rewrite", "--undo")
+		cmd = exec.Command("dms3gx-go", "rewrite", "--undo")
 		cmd.Stderr = os.Stderr
 		cmd.Stdout = os.Stdout
 		if err := cmd.Run(); err != nil {
 			return err
 		}
 
-		pkg, err := LoadPackageFile(gx.PkgFileName)
+		pkg, err := LoadPackageFile(dms3gx.PkgFileName)
 		if err != nil {
 			return err
 		}
@@ -791,7 +791,7 @@ func devCopySymlinking(root string, pkg *Package, done map[string]bool) error {
 		done[dep.Hash] = true
 
 		var cpkg Package
-		err := gx.LoadPackage(&cpkg, pkg.Language, dep.Hash)
+		err := dms3gx.LoadPackage(&cpkg, pkg.Language, dep.Hash)
 		if err != nil {
 			if os.IsNotExist(err) {
 				VLog("LoadPackage error: ", err)
@@ -800,8 +800,8 @@ func devCopySymlinking(root string, pkg *Package, done map[string]bool) error {
 			return err
 		}
 
-		frompath := filepath.Join(root, "gx", "ipfs", dep.Hash, dep.Name)
-		cmd := exec.Command("gx-go", "rewrite", "--undo")
+		frompath := filepath.Join(root, "dms3gx", "dms3fs", dep.Hash, dep.Name)
+		cmd := exec.Command("dms3gx-go", "rewrite", "--undo")
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		cmd.Dir = frompath
@@ -809,7 +809,7 @@ func devCopySymlinking(root string, pkg *Package, done map[string]bool) error {
 			return err
 		}
 
-		topath := filepath.Join(root, cpkg.Gx.DvcsImport)
+		topath := filepath.Join(root, cpkg.Dms3Gx.DvcsImport)
 		dir := filepath.Dir(topath)
 		if err := os.MkdirAll(dir, 0755); err != nil {
 			return err
@@ -827,12 +827,12 @@ func devCopySymlinking(root string, pkg *Package, done map[string]bool) error {
 }
 
 func fullRewrite(undo bool) error {
-	root, err := gx.GetPackageRoot()
+	root, err := dms3gx.GetPackageRoot()
 	if err != nil {
 		return err
 	}
 
-	pkg, err := LoadPackageFile(filepath.Join(root, gx.PkgFileName))
+	pkg, err := LoadPackageFile(filepath.Join(root, dms3gx.PkgFileName))
 	if err != nil {
 		return err
 	}
@@ -866,16 +866,16 @@ func packagesGoImport(p string) (string, error) {
 
 func postImportHook(pkg *Package, npkgHash string) error {
 	var npkg Package
-	err := gx.LoadPackage(&npkg, "go", npkgHash)
+	err := dms3gx.LoadPackage(&npkg, "go", npkgHash)
 	if err != nil {
 		return err
 	}
 
-	if npkg.Gx.DvcsImport != "" {
-		q := fmt.Sprintf("update imports of %s to the newly imported package?", npkg.Gx.DvcsImport)
+	if npkg.Dms3Gx.DvcsImport != "" {
+		q := fmt.Sprintf("update imports of %s to the newly imported package?", npkg.Dms3Gx.DvcsImport)
 		if yesNoPrompt(q, false) {
-			nimp := fmt.Sprintf("gx/ipfs/%s/%s", npkgHash, npkg.Name)
-			err := doUpdate(cwd, npkg.Gx.DvcsImport, nimp)
+			nimp := fmt.Sprintf("dms3gx/dms3fs/%s/%s", npkgHash, npkg.Name)
+			err := doUpdate(cwd, npkg.Dms3Gx.DvcsImport, nimp)
 			if err != nil {
 				return err
 			}
@@ -887,13 +887,13 @@ func postImportHook(pkg *Package, npkgHash string) error {
 
 func reqCheckHook(pkgpath string) error {
 	var npkg Package
-	pkgfile := filepath.Join(pkgpath, gx.PkgFileName)
-	err := gx.LoadPackageFile(&npkg, pkgfile)
+	pkgfile := filepath.Join(pkgpath, dms3gx.PkgFileName)
+	err := dms3gx.LoadPackageFile(&npkg, pkgfile)
 	if err != nil {
 		return err
 	}
 
-	if npkg.Gx.GoVersion != "" {
+	if npkg.Dms3Gx.GoVersion != "" {
 		out, err := exec.Command("go", "version").CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("no go compiler installed")
@@ -910,7 +910,7 @@ func reqCheckHook(pkgpath string) error {
 
 		havevers := parts[2][2:]
 
-		reqvers := npkg.Gx.GoVersion
+		reqvers := npkg.Dms3Gx.GoVersion
 
 		badreq, err := versionComp(havevers, reqvers)
 		if err != nil {
@@ -920,21 +920,21 @@ func reqCheckHook(pkgpath string) error {
 			return fmt.Errorf("package '%s' requires at least go version %s, you have %s installed.", npkg.Name, reqvers, havevers)
 		}
 
-		gxgocompvers := runtime.Version()
-		if strings.HasPrefix(gxgocompvers, "devel") {
+		dms3gxgocompvers := runtime.Version()
+		if strings.HasPrefix(dms3gxgocompvers, "devel") {
 			return nil
 		}
-		if strings.HasPrefix(gxgocompvers, "go") {
-			badreq, err := versionComp(gxgocompvers[2:], reqvers)
+		if strings.HasPrefix(dms3gxgocompvers, "go") {
+			badreq, err := versionComp(dms3gxgocompvers[2:], reqvers)
 			if err != nil {
 				return err
 			}
 			if badreq {
-				return fmt.Errorf("package '%s' requires at least go version %s.\nhowever, your gx-go binary was compiled with %s.\nPlease update gx-go (or recompile with your current go compiler)", npkg.Name, reqvers, gxgocompvers)
+				return fmt.Errorf("package '%s' requires at least go version %s.\nhowever, your dms3gx-go binary was compiled with %s.\nPlease update dms3gx-go (or recompile with your current go compiler)", npkg.Name, reqvers, dms3gxgocompvers)
 			}
 		} else {
-			Log("gx-go was compiled with an unrecognized version of go. (%s)", gxgocompvers)
-			Log("If you encounter any strange issues during its usage, try rebuilding gx-go with go %s or higher", reqvers)
+			Log("dms3gx-go was compiled with an unrecognized version of go. (%s)", dms3gxgocompvers)
+			Log("If you encounter any strange issues during its usage, try rebuilding dms3gx-go with go %s or higher", reqvers)
 		}
 	}
 	return nil
@@ -984,19 +984,19 @@ func versionComp(have, req string) (bool, error) {
 
 func globalPath() string {
 	gp, _ := getGoPath()
-	return filepath.Join(gp, "src", "gx", "ipfs")
+	return filepath.Join(gp, "src", "dms3gx", "dms3fs")
 }
 
-func loadDep(dep *gx.Dependency, pkgdir string) (*Package, error) {
+func loadDep(dep *dms3gx.Dependency, pkgdir string) (*Package, error) {
 	var cpkg Package
 	pdir := filepath.Join(pkgdir, dep.Hash)
 	VLog("  - fetching dep: %s (%s)", dep.Name, dep.Hash)
-	err := gx.FindPackageInDir(&cpkg, pdir)
+	err := dms3gx.FindPackageInDir(&cpkg, pdir)
 	if err != nil {
 		// try global
 		p := filepath.Join(globalPath(), dep.Hash)
 		VLog("  - checking in global namespace (%s)", p)
-		gerr := gx.FindPackageInDir(&cpkg, p)
+		gerr := dms3gx.FindPackageInDir(&cpkg, p)
 		if gerr != nil {
 			return nil, fmt.Errorf("failed to find package: %s", gerr)
 		}
@@ -1008,15 +1008,15 @@ func loadDep(dep *gx.Dependency, pkgdir string) (*Package, error) {
 // Rewrites the package `DvcsImport` with the dependency hash (or
 // the other way around if `undo` is true). `overwrite` indicates
 // whether or not to allow overwriting an existing entry in the map.
-func addRewriteForDep(dep *gx.Dependency, pkg *Package, m map[string]string, undo bool, overwrite bool) {
-	if pkg.Gx.DvcsImport == "" {
+func addRewriteForDep(dep *dms3gx.Dependency, pkg *Package, m map[string]string, undo bool, overwrite bool) {
+	if pkg.Dms3Gx.DvcsImport == "" {
 		return
 		// Nothing to do as there is no DVCS import path.
 		// TODO: Should this case be flagged?
 	}
 
-	from := pkg.Gx.DvcsImport
-	to := "gx/ipfs/" + dep.Hash + "/" + pkg.Name
+	from := pkg.Dms3Gx.DvcsImport
+	to := "dms3gx/dms3fs/" + dep.Hash + "/" + pkg.Name
 	if undo {
 		from, to = to, from
 	}
@@ -1068,22 +1068,22 @@ func buildRewriteMapping(pkg *Package, pkgdir string, m map[string]string, undo 
 func buildMap(pkg *Package, m map[string]string) error {
 	for _, dep := range pkg.Dependencies {
 		var ch Package
-		err := gx.FindPackageInDir(&ch, filepath.Join(vendorDir, dep.Hash))
+		err := dms3gx.FindPackageInDir(&ch, filepath.Join(vendorDir, dep.Hash))
 		if err != nil {
 			return err
 		}
 
-		if ch.Gx.DvcsImport != "" {
-			e, ok := m[ch.Gx.DvcsImport]
+		if ch.Dms3Gx.DvcsImport != "" {
+			e, ok := m[ch.Dms3Gx.DvcsImport]
 			if ok {
 				if e != dep.Hash {
-					Log("have two dep packages with same import path: ", ch.Gx.DvcsImport)
+					Log("have two dep packages with same import path: ", ch.Dms3Gx.DvcsImport)
 					Log("  - ", e)
 					Log("  - ", dep.Hash)
 				}
 				continue
 			}
-			m[ch.Gx.DvcsImport] = dep.Hash
+			m[ch.Dms3Gx.DvcsImport] = dep.Hash
 		}
 
 		err = buildMap(&ch, m)

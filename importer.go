@@ -11,8 +11,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	rw "github.com/whyrusleeping/gx-go/rewrite"
-	gx "github.com/whyrusleeping/gx/gxutil"
+	rw "github.com/dms3-why/dms3gx-go/rewrite"
+	dms3gx "github.com/dms3-why/dms3gx/gxutil"
 	. "github.com/whyrusleeping/stump"
 )
 
@@ -46,9 +46,9 @@ func pathIsNotStdlib(path string) bool {
 }
 
 type Importer struct {
-	pkgs    map[string]*gx.Dependency
+	pkgs    map[string]*dms3gx.Dependency
 	gopath  string
-	pm      *gx.PM
+	pm      *dms3gx.PM
 	rewrite bool
 	yesall  bool
 	preMap  map[string]string
@@ -57,12 +57,12 @@ type Importer struct {
 }
 
 func NewImporter(rw bool, gopath string, premap map[string]string) (*Importer, error) {
-	cfg, err := gx.LoadConfig()
+	cfg, err := dms3gx.LoadConfig()
 	if err != nil {
 		return nil, err
 	}
 
-	pm, err := gx.NewPM(cfg)
+	pm, err := dms3gx.NewPM(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +75,7 @@ func NewImporter(rw bool, gopath string, premap map[string]string) (*Importer, e
 	bctx.GOPATH = gopath
 
 	return &Importer{
-		pkgs:    make(map[string]*gx.Dependency),
+		pkgs:    make(map[string]*dms3gx.Dependency),
 		gopath:  gopath,
 		pm:      pm,
 		rewrite: rw,
@@ -85,7 +85,7 @@ func NewImporter(rw bool, gopath string, premap map[string]string) (*Importer, e
 }
 
 // this function is an attempt to keep subdirectories of a package as part of
-// the same logical gx package. It has a special case for golang.org/x/ packages
+// the same logical dms3gx package. It has a special case for golang.org/x/ packages
 func getBaseDVCS(path string) string {
 	parts := strings.Split(path, "/")
 	depth := 3
@@ -101,7 +101,7 @@ func getBaseDVCS(path string) string {
 	return path
 }
 
-func (i *Importer) GxPublishGoPackage(imppath string) (*gx.Dependency, error) {
+func (i *Importer) Dms3GxPublishGoPackage(imppath string) (*dms3gx.Dependency, error) {
 	imppath = getBaseDVCS(imppath)
 	if d, ok := i.pkgs[imppath]; ok {
 		return d, nil
@@ -113,7 +113,7 @@ func (i *Importer) GxPublishGoPackage(imppath string) (*gx.Dependency, error) {
 			return nil, err
 		}
 
-		dep := &gx.Dependency{
+		dep := &dms3gx.Dependency{
 			Hash:    hash,
 			Name:    pkg.Name,
 			Version: pkg.Version,
@@ -132,14 +132,14 @@ func (i *Importer) GxPublishGoPackage(imppath string) (*gx.Dependency, error) {
 	}
 
 	pkgpath := path.Join(i.gopath, "src", imppath)
-	pkgFilePath := path.Join(pkgpath, gx.PkgFileName)
+	pkgFilePath := path.Join(pkgpath, dms3gx.PkgFileName)
 	pkg, err := LoadPackageFile(pkgFilePath)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			return nil, err
 		}
 
-		// init as gx package
+		// init as dms3gx package
 		parts := strings.Split(imppath, "/")
 		pkgname := parts[len(parts)-1]
 		if !i.yesall {
@@ -177,7 +177,7 @@ func (i *Importer) GxPublishGoPackage(imppath string) (*gx.Dependency, error) {
 		if strings.HasPrefix(child, imppath) {
 			continue
 		}
-		childdep, err := i.GxPublishGoPackage(child)
+		childdep, err := i.Dms3GxPublishGoPackage(child)
 		if err != nil {
 			return nil, err
 		}
@@ -185,7 +185,7 @@ func (i *Importer) GxPublishGoPackage(imppath string) (*gx.Dependency, error) {
 		pkg.Dependencies = append(pkg.Dependencies, childdep)
 	}
 
-	err = gx.SavePackageFile(pkg, pkgFilePath)
+	err = dms3gx.SavePackageFile(pkg, pkgFilePath)
 	if err != nil {
 		return nil, err
 	}
@@ -200,7 +200,7 @@ func (i *Importer) GxPublishGoPackage(imppath string) (*gx.Dependency, error) {
 		return nil, fmt.Errorf("rewriting imports failed: %s", err)
 	}
 
-	err = writeGxIgnore(pkgpath, []string{"Godeps/*"})
+	err = writeDms3GxIgnore(pkgpath, []string{"Godeps/*"})
 	if err != nil {
 		return nil, err
 	}
@@ -212,7 +212,7 @@ func (i *Importer) GxPublishGoPackage(imppath string) (*gx.Dependency, error) {
 
 	Log("published %s as %s", imppath, hash)
 
-	dep := &gx.Dependency{
+	dep := &dms3gx.Dependency{
 		Hash:    hash,
 		Name:    pkg.Name,
 		Version: pkg.Version,
@@ -315,7 +315,7 @@ func (i *Importer) rewriteImports(pkgpath string) error {
 
 		dep, ok := i.pkgs[in]
 		if ok {
-			return "gx/" + dep.Hash + "/" + dep.Name
+			return "dms3gx/" + dep.Hash + "/" + dep.Name
 		}
 
 		parts := strings.Split(in, "/")
@@ -326,7 +326,7 @@ func (i *Importer) rewriteImports(pkgpath string) error {
 				return in
 			}
 
-			return strings.Replace(in, obase, "gx/"+dep.Hash+"/"+dep.Name, 1)
+			return strings.Replace(in, obase, "dms3gx/"+dep.Hash+"/"+dep.Name, 1)
 		}
 
 		return in
@@ -352,6 +352,6 @@ func (imp *Importer) GoGet(path string) error {
 	return nil
 }
 
-func writeGxIgnore(dir string, ignore []string) error {
-	return ioutil.WriteFile(filepath.Join(dir, ".gxignore"), []byte(strings.Join(ignore, "\n")), 0644)
+func writeDms3GxIgnore(dir string, ignore []string) error {
+	return ioutil.WriteFile(filepath.Join(dir, ".dms3-gxignore"), []byte(strings.Join(ignore, "\n")), 0644)
 }

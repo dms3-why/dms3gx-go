@@ -9,49 +9,49 @@ import (
 	"strings"
 
 	cli "github.com/codegangsta/cli"
-	gx "github.com/whyrusleeping/gx/gxutil"
+	dms3gx "github.com/dms3-why/dms3gx/gxutil"
 )
 
-var pm *gx.PM
+var pm *dms3gx.PM
 
 var LinkCommand = cli.Command{
 	Name:  "link",
 	Usage: "Symlink packages to their dvcsimport repos, for local development.",
-	Description: `gx-go link eases local development by symlinking actual workspace repositories on demand.
+	Description: `dms3gx-go link eases local development by symlinking actual workspace repositories on demand.
 
 Example workflow:
 
-> gx-go link QmQA5mdxru8Bh6dpC9PJfSkumqnmHgJX7knxSgBo5Lpime QmVGtdTZdTFaLsaj2RwdVG8jcjNNcp1DE914DKZ2kHmXHw QmSpJByNKFX1sCsHBEp3R73FL4NF6FnQTEGyNAXHm2GS52
-linked QmQA5mdxru8Bh6dpC9PJfSkumqnmHgJX7knxSgBo5Lpime /home/user/go/src/github.com/libp2p/go-libp2p
-linked QmVGtdTZdTFaLsaj2RwdVG8jcjNNcp1DE914DKZ2kHmXHw /home/user/go/src/github.com/multiformats/go-multihash
-linked QmSpJByNKFX1sCsHBEp3R73FL4NF6FnQTEGyNAXHm2GS52 /home/user/go/src/github.com/ipfs/go-log
+> dms3gx-go link QmQA5mdxru8Bh6dpC9PJfSkumqnmHgJX7knxSgBo5Lpime QmVGtdTZdTFaLsaj2RwdVG8jcjNNcp1DE914DKZ2kHmXHw QmSpJByNKFX1sCsHBEp3R73FL4NF6FnQTEGyNAXHm2GS52
+linked QmQA5mdxru8Bh6dpC9PJfSkumqnmHgJX7knxSgBo5Lpime /home/user/go/src/github.com/dms3-p2p/go-p2p
+linked QmVGtdTZdTFaLsaj2RwdVG8jcjNNcp1DE914DKZ2kHmXHw /home/user/go/src/github.com/dms3-mft/go-multihash
+linked QmSpJByNKFX1sCsHBEp3R73FL4NF6FnQTEGyNAXHm2GS52 /home/user/go/src/github.com/dms3-fs/go-log
 
-> gx-go link
-QmQA5mdxru8Bh6dpC9PJfSkumqnmHgJX7knxSgBo5Lpime /home/user/go/src/github.com/libp2p/go-libp2p
-QmSpJByNKFX1sCsHBEp3R73FL4NF6FnQTEGyNAXHm2GS52 /home/user/go/src/github.com/ipfs/go-log
-QmVGtdTZdTFaLsaj2RwdVG8jcjNNcp1DE914DKZ2kHmXHw /home/user/go/src/github.com/multiformats/go-multihash
+> dms3gx-go link
+QmQA5mdxru8Bh6dpC9PJfSkumqnmHgJX7knxSgBo5Lpime /home/user/go/src/github.com/dms3-p2p/go-p2p
+QmSpJByNKFX1sCsHBEp3R73FL4NF6FnQTEGyNAXHm2GS52 /home/user/go/src/github.com/dms3-fs/go-log
+QmVGtdTZdTFaLsaj2RwdVG8jcjNNcp1DE914DKZ2kHmXHw /home/user/go/src/github.com/dms3-mft/go-multihash
 
-> gx-go link -r QmSpJByNKFX1sCsHBEp3R73FL4NF6FnQTEGyNAXHm2GS52
-unlinked QmSpJByNKFX1sCsHBEp3R73FL4NF6FnQTEGyNAXHm2GS52 /home/user/go/src/github.com/ipfs/go-log
+> dms3gx-go link -r QmSpJByNKFX1sCsHBEp3R73FL4NF6FnQTEGyNAXHm2GS52
+unlinked QmSpJByNKFX1sCsHBEp3R73FL4NF6FnQTEGyNAXHm2GS52 /home/user/go/src/github.com/dms3-fs/go-log
 
-> gx-go link
-QmQA5mdxru8Bh6dpC9PJfSkumqnmHgJX7knxSgBo5Lpime /home/user/go/src/github.com/libp2p/go-libp2p
-QmVGtdTZdTFaLsaj2RwdVG8jcjNNcp1DE914DKZ2kHmXHw /home/user/go/src/github.com/multiformats/go-multihash
+> dms3gx-go link
+QmQA5mdxru8Bh6dpC9PJfSkumqnmHgJX7knxSgBo5Lpime /home/user/go/src/github.com/dms3-p2p/go-p2p
+QmVGtdTZdTFaLsaj2RwdVG8jcjNNcp1DE914DKZ2kHmXHw /home/user/go/src/github.com/dms3-mft/go-multihash
 
-> gx-go link -r -a
-unlinked QmQA5mdxru8Bh6dpC9PJfSkumqnmHgJX7knxSgBo5Lpime /home/user/go/src/github.com/libp2p/go-libp2p
-unlinked QmVGtdTZdTFaLsaj2RwdVG8jcjNNcp1DE914DKZ2kHmXHw /home/user/go/src/github.com/multiformats/go-multihash
+> dms3gx-go link -r -a
+unlinked QmQA5mdxru8Bh6dpC9PJfSkumqnmHgJX7knxSgBo5Lpime /home/user/go/src/github.com/dms3-p2p/go-p2p
+unlinked QmVGtdTZdTFaLsaj2RwdVG8jcjNNcp1DE914DKZ2kHmXHw /home/user/go/src/github.com/dms3-mft/go-multihash
 
-> gx-go link
+> dms3gx-go link
 `,
 	Flags: []cli.Flag{
 		cli.BoolFlag{
 			Name:  "r,remove",
-			Usage: "Remove an existing symlink and reinstate the gx package.",
+			Usage: "Remove an existing symlink and reinstate the dms3gx package.",
 		},
 		cli.BoolFlag{
 			Name:  "a,all",
-			Usage: "Remove all existing symlinks and reinstate the gx packages. Use with -r.",
+			Usage: "Remove all existing symlinks and reinstate the dms3gx packages. Use with -r.",
 		},
 	},
 	Action: func(c *cli.Context) error {
@@ -78,7 +78,7 @@ unlinked QmVGtdTZdTFaLsaj2RwdVG8jcjNNcp1DE914DKZ2kHmXHw /home/user/go/src/github
 				return nil
 			}
 		}
-		pkg, _ := LoadPackageFile(gx.PkgFileName)
+		pkg, _ := LoadPackageFile(dms3gx.PkgFileName)
 
 		for _, hash := range hashes {
 			if pkg != nil {
@@ -110,14 +110,14 @@ unlinked QmVGtdTZdTFaLsaj2RwdVG8jcjNNcp1DE914DKZ2kHmXHw /home/user/go/src/github
 func listLinkedPackages() ([][]string, error) {
 	var links [][]string
 
-	srcdir, err := gx.InstallPath("go", "", true)
+	srcdir, err := dms3gx.InstallPath("go", "", true)
 	if err != nil {
 		return links, err
 	}
-	gxbase := filepath.Join(srcdir, "gx", "ipfs")
+	dms3gxbase := filepath.Join(srcdir, "dms3gx", "dms3fs")
 
-	filepath.Walk(gxbase, func(path string, fi os.FileInfo, err error) error {
-		relpath, err := filepath.Rel(gxbase, path)
+	filepath.Walk(dms3gxbase, func(path string, fi os.FileInfo, err error) error {
+		relpath, err := filepath.Rel(dms3gxbase, path)
 		if err != nil {
 			return err
 		}
@@ -141,34 +141,34 @@ func listLinkedPackages() ([][]string, error) {
 	return links, nil
 }
 
-// gx get $hash
+// dms3gx get $hash
 // go get $dvcsimport
-// rm -rf $GOPATH/src/gx/ipfs/$hash/$pkgname
-// ln -s $GOPATH/src/$dvcsimport $GOPATH/src/gx/ipfs/$hash/$pkgname
-// cd $GOPATH/src/$dvcsimport && gx install && gx-go rewrite
+// rm -rf $GOPATH/src/dms3gx/dms3fs/$hash/$pkgname
+// ln -s $GOPATH/src/$dvcsimport $GOPATH/src/dms3gx/dms3fs/$hash/$pkgname
+// cd $GOPATH/src/$dvcsimport && dms3gx install && dms3gx-go rewrite
 func linkPackage(hash string) (string, error) {
-	srcdir, err := gx.InstallPath("go", "", true)
+	srcdir, err := dms3gx.InstallPath("go", "", true)
 	if err != nil {
 		return "", err
 	}
-	gxdir := filepath.Join(srcdir, "gx", "ipfs", hash)
+	dms3gxdir := filepath.Join(srcdir, "dms3gx", "dms3fs", hash)
 
-	gxget := exec.Command("gx", "get", hash, "-o", gxdir)
-	gxget.Stdout = os.Stderr
-	gxget.Stderr = os.Stderr
-	if err = gxget.Run(); err != nil {
-		return "", fmt.Errorf("error during gx get: %s", err)
+	dms3gxget := exec.Command("dms3gx", "get", hash, "-o", dms3gxdir)
+	dms3gxget.Stdout = os.Stderr
+	dms3gxget.Stderr = os.Stderr
+	if err = dms3gxget.Run(); err != nil {
+		return "", fmt.Errorf("error during dms3gx get: %s", err)
 	}
 
-	var pkg gx.Package
-	err = gx.FindPackageInDir(&pkg, gxdir)
+	var pkg dms3gx.Package
+	err = dms3gx.FindPackageInDir(&pkg, dms3gxdir)
 	if err != nil {
-		return "", fmt.Errorf("error during gx.FindPackageInDir: %s", err)
+		return "", fmt.Errorf("error during dms3gx.FindPackageInDir: %s", err)
 	}
 
-	dvcsimport := GxDvcsImport(&pkg)
+	dvcsimport := Dms3GxDvcsImport(&pkg)
 	target := filepath.Join(srcdir, dvcsimport)
-	gxtarget := filepath.Join(gxdir, pkg.Name)
+	dms3gxtarget := filepath.Join(dms3gxdir, pkg.Name)
 
 	_, err = os.Stat(target)
 	if os.IsNotExist(err) {
@@ -182,78 +182,78 @@ func linkPackage(hash string) (string, error) {
 		return "", fmt.Errorf("error during os.Stat: %s", err)
 	}
 
-	err = os.RemoveAll(gxtarget)
+	err = os.RemoveAll(dms3gxtarget)
 	if err != nil {
 		return "", fmt.Errorf("error during os.RemoveAll: %s", err)
 	}
 
-	err = os.Symlink(target, gxtarget)
+	err = os.Symlink(target, dms3gxtarget)
 	if err != nil {
 		return "", fmt.Errorf("error during os.Symlink: %s", err)
 	}
 
-	gxinst := exec.Command("gx", "install")
-	gxinst.Dir = target
-	gxinst.Stdout = nil
-	gxinst.Stderr = os.Stderr
-	if err = gxinst.Run(); err != nil {
-		return "", fmt.Errorf("error during gx install: %s", err)
+	dms3gxinst := exec.Command("dms3gx", "install")
+	dms3gxinst.Dir = target
+	dms3gxinst.Stdout = nil
+	dms3gxinst.Stderr = os.Stderr
+	if err = dms3gxinst.Run(); err != nil {
+		return "", fmt.Errorf("error during dms3gx install: %s", err)
 	}
 
-	rwcmd := exec.Command("gx-go", "hook", "post-install", gxdir)
+	rwcmd := exec.Command("dms3gx-go", "hook", "post-install", dms3gxdir)
 	rwcmd.Dir = target
 	rwcmd.Stdout = os.Stdout
 	rwcmd.Stderr = os.Stderr
 	if err := rwcmd.Run(); err != nil {
-		return "", fmt.Errorf("error during gx-go rw: %s", err)
+		return "", fmt.Errorf("error during dms3gx-go rw: %s", err)
 	}
 
 	return target, nil
 }
 
-// rm -rf $GOPATH/src/gx/ipfs/$hash
-// gx get $hash
+// rm -rf $GOPATH/src/dms3gx/dms3fs/$hash
+// dms3gx get $hash
 func unlinkPackage(hash string) (string, error) {
-	srcdir, err := gx.InstallPath("go", "", true)
+	srcdir, err := dms3gx.InstallPath("go", "", true)
 	if err != nil {
 		return "", err
 	}
-	gxdir := filepath.Join(srcdir, "gx", "ipfs", hash)
+	dms3gxdir := filepath.Join(srcdir, "dms3gx", "dms3fs", hash)
 
-	err = os.RemoveAll(gxdir)
+	err = os.RemoveAll(dms3gxdir)
 	if err != nil {
 		return "", fmt.Errorf("error during os.RemoveAll: %s", err)
 	}
 
-	gxget := exec.Command("gx", "get", hash, "-o", gxdir)
-	gxget.Stdout = nil
-	gxget.Stderr = os.Stderr
-	if err = gxget.Run(); err != nil {
-		return "", fmt.Errorf("error during gx get: %s", err)
+	dms3gxget := exec.Command("dms3gx", "get", hash, "-o", dms3gxdir)
+	dms3gxget.Stdout = nil
+	dms3gxget.Stderr = os.Stderr
+	if err = dms3gxget.Run(); err != nil {
+		return "", fmt.Errorf("error during dms3gx get: %s", err)
 	}
 
-	var pkg gx.Package
-	err = gx.FindPackageInDir(&pkg, gxdir)
+	var pkg dms3gx.Package
+	err = dms3gx.FindPackageInDir(&pkg, dms3gxdir)
 	if err != nil {
-		return "", fmt.Errorf("error during gx.FindPackageInDir: %s", err)
+		return "", fmt.Errorf("error during dms3gx.FindPackageInDir: %s", err)
 	}
 
-	dvcsimport := GxDvcsImport(&pkg)
+	dvcsimport := Dms3GxDvcsImport(&pkg)
 	target := filepath.Join(srcdir, dvcsimport)
 
-	uwcmd := exec.Command("gx-go", "uw")
+	uwcmd := exec.Command("dms3gx-go", "uw")
 	uwcmd.Dir = target
 	uwcmd.Stdout = nil
 	uwcmd.Stderr = os.Stderr
 	if err := uwcmd.Run(); err != nil {
-		return "", fmt.Errorf("error during gx-go uw: %s", err)
+		return "", fmt.Errorf("error during dms3gx-go uw: %s", err)
 	}
 
 	return target, nil
 }
 
-func GxDvcsImport(pkg *gx.Package) string {
-	pkggx := make(map[string]interface{})
-	_ = json.Unmarshal(pkg.Gx, &pkggx)
-	return pkggx["dvcsimport"].(string)
+func Dms3GxDvcsImport(pkg *dms3gx.Package) string {
+	pkgdms3gx := make(map[string]interface{})
+	_ = json.Unmarshal(pkg.Dms3Gx, &pkgdms3gx)
+	return pkgdms3gx["dvcsimport"].(string)
 }

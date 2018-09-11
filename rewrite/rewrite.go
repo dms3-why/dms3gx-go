@@ -78,7 +78,7 @@ func RewriteImports(ipath string, rw func(string) string, filter func(string) bo
 	return nil
 }
 
-// inspired by godeps rewrite, rewrites import paths with gx vendored names
+// inspired by godeps rewrite, rewrites import paths with dms3gx vendored names
 func rewriteImportsInFile(fi string, rw func(string) string, rwLock *sync.Mutex) error {
 	// 1. Rewrite the imports (if we have any)
 	fset := token.NewFileSet()
